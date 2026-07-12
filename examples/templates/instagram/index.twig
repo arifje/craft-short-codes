@@ -1,0 +1,204 @@
+{#
+ # Portable Instagram link-in-bio example for Short Codes.
+ #
+ # Copy this file to templates/instagram/index.twig and copy the accompanying
+ # stylesheet to web/css/instagram.css. Adjust the values in this block to
+ # match the project. Keep the section and entry type filters aligned with
+ # config/short-codes.php.
+ #}
+{% set pagePath = 'instagram' %}
+{% set stylesheetPath = 'css/instagram.css' %}
+{% set sectionHandles = craft.shortCodes.sectionHandles %}
+{% set sectionHandles = sectionHandles is iterable ? sectionHandles : [] %}
+{% set entryTypeHandles = craft.shortCodes.entryTypeHandles %}
+{% set entryTypeHandles = entryTypeHandles is iterable ? entryTypeHandles : [] %}
+{% set codeFieldHandle = craft.shortCodes.fieldHandle ?: 'instagramCode' %}
+{% set imageUrlFieldHandle = 'instagramCardImageUrl' %}
+{% set codeLength = craft.shortCodes.codeLength ?: 5 %}
+{% set feedLimit = 60 %}
+{% set feedSectionCriterion = sectionHandles|length ? sectionHandles : '*' %}
+
+{# Treat array-style query parameters as empty instead of attempting to print them. #}
+{% set submittedValue = craft.app.request.getQueryParam('code') %}
+{% set wasSubmitted = submittedValue is not null %}
+{% set requestedCode = submittedValue is iterable ? '' : submittedValue|default('')|trim %}
+{% set matchingEntry = requestedCode ? craft.shortCodes.findEntry(requestedCode) : null %}
+{% set matchingUrl = matchingEntry ? matchingEntry.url : null %}
+
+{# Redirect only to the URL resolved from the matched Craft entry. #}
+{% if matchingEntry and matchingUrl %}
+    {% redirect matchingUrl %}
+{% endif %}
+
+{% set showNotFoundError = wasSubmitted and requestedCode and not matchingUrl %}
+
+{% set feedQuery = craft.entries()
+    .section(feedSectionCriterion)
+    .status('live')
+    .drafts(false)
+    .provisionalDrafts(false)
+    .revisions(false)
+    .ignorePlaceholders()
+    .orderBy('postDate desc')
+    .limit(feedLimit)
+%}
+
+{% if entryTypeHandles|length %}
+    {% do feedQuery.type(entryTypeHandles) %}
+{% endif %}
+
+{% set feedEntries = feedQuery.all() %}
+
+<!doctype html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Vind een artikel met de code uit een Instagram-bericht.">
+    <title>Instagram-artikelen</title>
+    <link rel="stylesheet" href="{{ url(stylesheetPath)|e('html_attr') }}">
+</head>
+<body class="instagram-page">
+    <a class="instagram-page__skip-link" href="#main-content">
+        Naar de inhoud
+    </a>
+
+    <main id="main-content">
+        <section class="instagram-search" aria-labelledby="instagram-search-title">
+            <div class="instagram-page__container instagram-page__container--narrow">
+                <div class="instagram-search__card">
+                    <p class="instagram-search__eyebrow">Instagram</p>
+
+                    <h1 id="instagram-search-title" class="instagram-search__title">
+                        Zoek het artikel
+                    </h1>
+
+                    <p class="instagram-search__intro">
+                        Vul de code in die onderaan het Instagram-bericht staat.
+                        Je wordt direct naar het juiste artikel gestuurd.
+                    </p>
+
+                    <form
+                        class="instagram-search__form"
+                        method="get"
+                        action="{{ url(pagePath)|e('html_attr') }}"
+                    >
+                        <div class="instagram-search__field">
+                            <label class="instagram-search__label" for="article-code">
+                                Artikelcode
+                            </label>
+
+                            <input
+                                id="article-code"
+                                class="instagram-search__input"
+                                name="code"
+                                type="text"
+                                value="{{ requestedCode|e('html_attr') }}"
+                                placeholder="Bijvoorbeeld: 7K4MP"
+                                maxlength="{{ codeLength + 5 }}"
+                                autocomplete="off"
+                                autocapitalize="characters"
+                                spellcheck="false"
+                                aria-describedby="article-code-help{% if showNotFoundError %} article-code-error{% endif %}"
+                                {% if showNotFoundError %}
+                                    aria-invalid="true"
+                                    aria-errormessage="article-code-error"
+                                {% endif %}
+                                required
+                            >
+
+                            <p id="article-code-help" class="instagram-search__help">
+                                De artikelcode bestaat uit {{ codeLength }} letters en cijfers.
+                            </p>
+                        </div>
+
+                        <button class="instagram-search__button" type="submit">
+                            Open artikel
+                        </button>
+                    </form>
+
+                    {% if showNotFoundError %}
+                        <p id="article-code-error" class="instagram-search__error" role="alert">
+                            We konden geen artikel vinden met deze code. Controleer de code en probeer het opnieuw.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="instagram-feed" aria-labelledby="instagram-feed-title">
+            <div class="instagram-page__container">
+                <header class="instagram-feed__header">
+                    <div>
+                        <p class="instagram-feed__eyebrow">Bekijk en lees</p>
+                        <h2 id="instagram-feed-title" class="instagram-feed__title">
+                            Laatste Instagram-berichten
+                        </h2>
+                    </div>
+
+                    <p class="instagram-feed__intro">
+                        Herken je de afbeelding? Tik erop om het bijbehorende artikel te openen.
+                    </p>
+                </header>
+
+                <div class="instagram-feed__grid">
+                    {% set visibleCardCount = 0 %}
+
+                    {% for entry in feedEntries %}
+                        {% set fieldLayout = entry.fieldLayout %}
+                        {% set hasCodeField = fieldLayout and fieldLayout.getFieldByHandle(codeFieldHandle) %}
+                        {% set hasImageField = fieldLayout and fieldLayout.getFieldByHandle(imageUrlFieldHandle) %}
+                        {% set rawCode = hasCodeField ? entry.getFieldValue(codeFieldHandle) : null %}
+                        {% set rawImageUrl = hasImageField ? entry.getFieldValue(imageUrlFieldHandle) : null %}
+                        {% set code = rawCode is iterable ? '' : rawCode|default('')|trim %}
+                        {% set imageUrl = rawImageUrl is iterable ? '' : rawImageUrl|default('')|trim %}
+                        {% set imageUrlLower = imageUrl|lower %}
+                        {% set hasSafeImageUrl = imageUrlLower starts with 'https://' or imageUrlLower starts with 'http://' %}
+                        {% set articleUrl = entry.url %}
+
+                        {% if code and hasSafeImageUrl and articleUrl %}
+                            {% set visibleCardCount = visibleCardCount + 1 %}
+                            {% set articleTitle = entry.title ? entry.title : 'Artikel' %}
+
+                            <article class="instagram-card">
+                                <a
+                                    class="instagram-card__link"
+                                    href="{{ articleUrl|e('html_attr') }}"
+                                    aria-label="Lees artikel: {{ articleTitle|e('html_attr') }}"
+                                >
+                                    <span class="instagram-card__media">
+                                        <img
+                                            class="instagram-card__image"
+                                            src="{{ imageUrl|e('html_attr') }}"
+                                            alt="{{ articleTitle|e('html_attr') }}"
+                                            width="640"
+                                            height="640"
+                                            loading="{{ visibleCardCount <= 9 ? 'eager' : 'lazy' }}"
+                                            decoding="async"
+                                        >
+                                    </span>
+
+                                    <span class="instagram-card__content">
+                                        <span class="instagram-card__title">
+                                            {{ articleTitle|e }}
+                                        </span>
+                                        <span class="instagram-card__code">
+                                            Code {{ code|e }}
+                                        </span>
+                                    </span>
+                                </a>
+                            </article>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if visibleCardCount == 0 %}
+                    <p class="instagram-feed__empty">
+                        Er zijn op dit moment geen Instagram-berichten om te tonen.
+                    </p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

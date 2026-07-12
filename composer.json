@@ -1,0 +1,62 @@
+{
+  "name": "arjan-brinkman/craft-short-codes",
+  "description": "Generate short, unique codes for Craft CMS entries.",
+  "type": "craft-plugin",
+  "license": "MIT",
+  "keywords": [
+    "craft",
+    "craftcms",
+    "craft-plugin",
+    "short-code",
+    "instagram"
+  ],
+  "support": {
+    "issues": "https://github.com/arifje/craft-short-codes/issues",
+    "source": "https://github.com/arifje/craft-short-codes",
+    "docs": "https://github.com/arifje/craft-short-codes/blob/main/README.md"
+  },
+  "require": {
+    "php": "^8.0.2",
+    "craftcms/cms": "^4.0.0 || ^5.0.0"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^1.12 || ^2.1",
+    "phpunit/phpunit": "^9.6 || ^10.5 || ^11.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "arjanbrinkman\\craftshortcodes\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "arjanbrinkman\\craftshortcodes\\tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "handle": "short-codes",
+    "name": "Short Codes",
+    "class": "arjanbrinkman\\craftshortcodes\\Plugin",
+    "description": "Generate short, unique codes for Craft CMS entries.",
+    "developer": "Arjan Brinkman",
+    "developerUrl": "https://github.com/arifje",
+    "documentationUrl": "https://github.com/arifje/craft-short-codes/blob/main/README.md"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "phpstan": "phpstan analyse --memory-limit=1G --no-progress --debug",
+    "check": [
+      "@test",
+      "@phpstan"
+    ]
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "craftcms/plugin-installer": true,
+      "yiisoft/yii2-composer": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

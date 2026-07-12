@@ -1,0 +1,9 @@
+parameters:
+    level: 7
+    scanFiles:
+        - vendor/yiisoft/yii2/Yii.php
+        - vendor/craftcms/cms/src/CraftTrait.php
+        - vendor/craftcms/cms/src/Craft.php
+    paths:
+        - src
+    tmpDir: var/phpstan
