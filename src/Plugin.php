@@ -14,9 +14,11 @@ use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\elements\Entry;
 use craft\events\ModelEvent as CraftModelEvent;
+use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\Json;
 use craft\web\Application as WebApplication;
 use craft\web\twig\variables\CraftVariable;
+use craft\web\UrlManager;
 use Throwable;
 use yii\base\Event;
 use yii\base\ModelEvent as YiiModelEvent;
@@ -45,6 +47,7 @@ class Plugin extends BasePlugin
 
         $this->registerEntryEvents();
         $this->registerTwigVariable();
+        $this->registerSiteRoutes();
         $this->registerCpGenerator();
     }
 
@@ -154,5 +157,16 @@ class Plugin extends BasePlugin
                 'errorMessage' => Craft::t('short-codes', 'The code could not be generated. Try again.'),
             ])
         ));
+    }
+
+    private function registerSiteRoutes(): void
+    {
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            static function(RegisterUrlRulesEvent $event): void {
+                $event->rules['api/short-codes/resolve'] = 'short-codes/codes/resolve';
+            }
+        );
     }
 }

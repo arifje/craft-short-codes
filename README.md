@@ -205,6 +205,27 @@ Additional values are available to Twig:
 
 Use `craft.shortCodes`, without parentheses.
 
+## Public URL resolver endpoint
+
+External automations can resolve a code to the corresponding public article URL:
+
+```http
+GET /api/short-codes/resolve?code=7K4MP
+```
+
+Successful response:
+
+```json
+{
+  "code": "7K4MP",
+  "url": "https://example.com/articles/example"
+}
+```
+
+The endpoint is read-only and does not require authentication. It normalizes the submitted code and returns only live entries on the current site that have a public URL. Malformed codes return HTTP `400`, unknown or non-public codes return `404`, and responses use `Cache-Control: no-store` so integrations do not retain a stale code mapping.
+
+For multisite installations, call the endpoint on the domain of the site whose entry URL should be returned. The action URL remains available as `/actions/short-codes/codes/resolve?code=7K4MP`, but the site route above is the recommended integration URL.
+
 ## Instagram link-in-bio page
 
 This repository includes a complete, framework-independent Dutch example:
