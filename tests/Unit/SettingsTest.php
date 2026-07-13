@@ -9,6 +9,11 @@ use PHPUnit\Framework\TestCase;
 
 final class SettingsTest extends TestCase
 {
+    public function testDefaultFieldHandleIsGeneric(): void
+    {
+        self::assertSame('shortCode', (new Settings())->getFieldHandle());
+    }
+
     public function testAlphabetNormalizationRemovesDuplicateCharacters(): void
     {
         $settings = new Settings([

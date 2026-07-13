@@ -22,7 +22,7 @@ class Settings extends Model
     public const MAXIMUM_GENERATION_ATTEMPTS = 10000;
 
     /** @var mixed Expected type: string */
-    public mixed $fieldHandle = 'instagramCode';
+    public mixed $fieldHandle = 'shortCode';
 
     /** @var mixed Expected type: string[] */
     public mixed $sectionHandles = ['media', 'sponsored'];

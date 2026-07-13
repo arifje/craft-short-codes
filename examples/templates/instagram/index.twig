@@ -12,7 +12,7 @@
 {% set sectionHandles = sectionHandles is iterable ? sectionHandles : [] %}
 {% set entryTypeHandles = craft.shortCodes.entryTypeHandles %}
 {% set entryTypeHandles = entryTypeHandles is iterable ? entryTypeHandles : [] %}
-{% set codeFieldHandle = craft.shortCodes.fieldHandle ?: 'instagramCode' %}
+{% set codeFieldHandle = craft.shortCodes.fieldHandle ?: 'shortCode' %}
 {% set imageUrlFieldHandle = 'instagramCardImageUrl' %}
 {% set codeLength = craft.shortCodes.codeLength ?: 5 %}
 {% set feedLimit = 60 %}

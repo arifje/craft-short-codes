@@ -48,7 +48,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry = $this->entry('media', ' 7k-4_mp ');
         $entry->expects(self::once())
             ->method('setFieldValue')
-            ->with('instagramCode', '7K4MP');
+            ->with('shortCode', '7K4MP');
 
         self::assertTrue($service->prepareEntryForSave($entry));
     }
@@ -60,7 +60,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry->expects(self::once())
             ->method('setFieldValue')
             ->with(
-                'instagramCode',
+                'shortCode',
                 self::callback(static fn(string $code): bool =>
                     strlen($code) === 5 && preg_match('/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{5}$/', $code) === 1
                 )
@@ -103,7 +103,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry = $this->entry('media', 'AB234');
         $entry->expects(self::once())
             ->method('addError')
-            ->with('field:instagramCode', 'This code is already used by another entry.');
+            ->with('field:shortCode', 'This code is already used by another entry.');
 
         $service->validateEntry($entry);
 
@@ -118,7 +118,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry = $this->entry('media', 'AB234');
         $entry->expects(self::once())
             ->method('addError')
-            ->with('field:instagramCode', 'This code is already used by another entry.');
+            ->with('field:shortCode', 'This code is already used by another entry.');
 
         self::assertFalse($service->prepareEntryForSave($entry));
     }
@@ -129,7 +129,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry = $this->entry('media', 'AB@24');
         $entry->expects(self::once())
             ->method('addError')
-            ->with('field:instagramCode', 'This code contains characters that are not allowed.');
+            ->with('field:shortCode', 'This code contains characters that are not allowed.');
 
         $service->validateEntry($entry);
         self::assertNull($service->lastUniquenessCode);
@@ -141,7 +141,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry = $this->entry('media', 'AB24');
         $entry->expects(self::once())
             ->method('addError')
-            ->with('field:instagramCode', 'This code must contain exactly 5 characters.');
+            ->with('field:shortCode', 'This code must contain exactly 5 characters.');
 
         $service->validateEntry($entry);
         self::assertNull($service->lastUniquenessCode);
@@ -224,7 +224,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry->sectionId = 1;
         $entry->isProvisionalDraft = false;
         $entry->method('getCanonicalId')->willReturn(42);
-        $entry->method('getFieldValue')->with('instagramCode')->willReturn($fieldValue);
+        $entry->method('getFieldValue')->with('shortCode')->willReturn($fieldValue);
         $entry->method('getIsDerivative')->willReturn($isDraft || $isRevision);
         $entry->method('getIsDraft')->willReturn($isDraft);
         $entry->method('getIsRevision')->willReturn($isRevision);

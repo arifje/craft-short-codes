@@ -1,6 +1,8 @@
 # Short Codes for Craft CMS
 
-Short Codes generates a short, random article code when an eligible Craft entry is saved. The code lives in a normal Plain Text field, so editors can see it, copy it into an Instagram caption, or enter a controlled manual override.
+Short Codes generates a short, random article code when an eligible Craft entry is saved. The code lives in a normal Plain Text field, so editors can see it, use it in places such as an Instagram caption, or enter a controlled manual override.
+
+The plugin itself is platform-agnostic. Instagram is included only as an example of how short codes can connect social posts to Craft entries.
 
 ```text
 7K4MP
@@ -56,8 +58,8 @@ Then run the same `composer require` and `plugin/install` commands above. Copy [
 
 In **Settings → Fields**, create a field with these values:
 
-- Name: `Instagram code`
-- Handle: `instagramCode` (or the handle configured below)
+- Name: `Short code`
+- Handle: `shortCode` (or the handle configured below)
 - Type: **Plain Text**
 - Translation method: **Not translatable**
 - Required: **off**
@@ -74,7 +76,7 @@ Create `config/short-codes.php` in the Craft project:
 <?php
 
 return [
-    'fieldHandle' => 'instagramCode',
+    'fieldHandle' => 'shortCode',
 
     'sectionHandles' => [
         'media',
@@ -283,6 +285,13 @@ The unit suite covers alphabet and code normalization, secure generation constra
 Database-backed Craft integration—real content storage on both Craft 4 and Craft 5, multisite propagation, actual console execution, and browser rendering—must still be verified inside the host Craft project because this standalone package does not include a Craft project, database, or site fixtures.
 
 ## Upgrade notes
+
+### 1.0.1
+
+- Renamed the default field handle from `instagramCode` to the platform-neutral `shortCode`.
+- Kept Instagram-specific naming confined to the optional link-in-bio example.
+- Existing installations that already use `instagramCode` can either rename that Craft field to `shortCode` or keep `'fieldHandle' => 'instagramCode'` in the project's `config/short-codes.php` file.
+- No migrations are required; existing code values remain stored in the configured Craft custom field.
 
 ### 1.0.0
 

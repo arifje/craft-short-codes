@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'fieldHandle' => 'instagramCode',
+    'fieldHandle' => 'shortCode',
 
     'sectionHandles' => [
         'media',
