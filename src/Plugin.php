@@ -7,11 +7,15 @@ namespace arjanbrinkman\craftshortcodes;
 use arjanbrinkman\craftshortcodes\models\Settings;
 use arjanbrinkman\craftshortcodes\services\ShortCodeService;
 use arjanbrinkman\craftshortcodes\variables\ShortCodesVariable;
+use arjanbrinkman\craftshortcodes\web\assets\ShortCodesCpAsset;
+use Craft;
 use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\elements\Entry;
 use craft\events\ModelEvent as CraftModelEvent;
+use craft\helpers\Json;
+use craft\web\Application as WebApplication;
 use craft\web\twig\variables\CraftVariable;
 use Throwable;
 use yii\base\Event;
@@ -41,6 +45,7 @@ class Plugin extends BasePlugin
 
         $this->registerEntryEvents();
         $this->registerTwigVariable();
+        $this->registerCpGenerator();
     }
 
     public function getShortCodes(): ShortCodeService
@@ -112,5 +117,42 @@ class Plugin extends BasePlugin
                 }
             }
         );
+    }
+
+    private function registerCpGenerator(): void
+    {
+        $application = Craft::$app;
+        if (!$application instanceof WebApplication) {
+            return;
+        }
+
+        $request = $application->getRequest();
+        if (!$request->getIsCpRequest() || $request->getIsActionRequest()) {
+            return;
+        }
+
+        $settings = $this->getShortCodes()->getValidatedSettings();
+        if (!$settings instanceof Settings) {
+            return;
+        }
+
+        $view = $application->getView();
+        $view->registerAssetBundle(ShortCodesCpAsset::class);
+        $view->registerJs(sprintf(
+            'new Craft.ShortCodesFieldGenerator(%s);',
+            Json::encode([
+                'fieldHandle' => $settings->getFieldHandle(),
+                'action' => 'short-codes/codes/generate',
+                'generateLabel' => Craft::t('short-codes', 'Generate code'),
+                'regenerateLabel' => Craft::t('short-codes', 'Generate new code'),
+                'confirmMessage' => Craft::t(
+                    'short-codes',
+                    'Replace the existing code? The new code will not be stored until you save the entry.'
+                ),
+                'generatedMessage' => Craft::t('short-codes', 'A new short code was generated.'),
+                'unsavedMessage' => Craft::t('short-codes', 'Save the entry to store this code.'),
+                'errorMessage' => Craft::t('short-codes', 'The code could not be generated. Try again.'),
+            ])
+        ));
     }
 }

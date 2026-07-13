@@ -134,6 +134,12 @@ For example, `ab-12 x` becomes `AB12X`.
 
 Other unsupported characters are not silently discarded. The editor receives an inline field error when a code has the wrong length, contains a character outside the configured alphabet, or belongs to another entry. A valid existing code is never replaced with a new random one.
 
+### Generate from the entry form
+
+In the control panel, Short Codes adds a **Generate code** button below the configured Plain Text field. The button requests a server-generated candidate that is unique at that moment, places it in the field, and leaves the entry unsaved so the editor can review it. Replacing an existing code requires confirmation.
+
+Saving the entry remains authoritative: the normal format and uniqueness validation runs again before persistence. As with automatic generation, a candidate is not reserved between generation and saving.
+
 ## Uniqueness and multisite behavior
 
 Uniqueness is global within the configured section and entry-type scope. The existence query:
@@ -285,6 +291,13 @@ The unit suite covers alphabet and code normalization, secure generation constra
 Database-backed Craft integration—real content storage on both Craft 4 and Craft 5, multisite propagation, actual console execution, and browser rendering—must still be verified inside the host Craft project because this standalone package does not include a Craft project, database, or site fixtures.
 
 ## Upgrade notes
+
+### 1.1.0
+
+- Added a localized **Generate code** button below the configured field in Craft entry forms.
+- Generated candidates are checked for uniqueness server-side and remain unsaved until the editor saves the entry.
+- Replacing an existing code requires confirmation; normal save-time validation still runs before persistence.
+- No migrations are required.
 
 ### 1.0.1
 

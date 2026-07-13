@@ -1,0 +1,11 @@
+.short-codes-generator {
+    display: flex;
+    min-height: 30px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.short-codes-generator__status {
+    margin: 0;
+}
