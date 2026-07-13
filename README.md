@@ -313,6 +313,13 @@ Database-backed Craft integration—real content storage on both Craft 4 and Cra
 
 ## Upgrade notes
 
+### 1.2.0
+
+- Added a public, read-only endpoint for resolving a short code to a live entry URL.
+- Use `GET /api/short-codes/resolve?code=7K4MP` for server-side social media and DM automations.
+- Invalid codes return HTTP `400`; unknown or non-public codes return `404`.
+- No migrations are required.
+
 ### 1.1.0
 
 - Added a localized **Generate code** button below the configured field in Craft entry forms.
