@@ -47,6 +47,7 @@ final class BackfillController extends Controller
             $this->stderr("Short Codes configuration is invalid. See the Craft log for details.\n");
             return ExitCode::CONFIG;
         }
+        $fieldHandle = $settings->getFieldHandle();
 
         if ($this->limit !== null && $this->limit < 1) {
             $this->stderr("--limit must be greater than zero.\n");
@@ -131,29 +132,31 @@ final class BackfillController extends Controller
 
                     $attempted++;
 
-                    if ($this->dryRun) {
-                        $code = $service->generateUniqueCode($entry->getCanonicalId(), $reservedCodes);
-                        if ($code === null) {
-                            $failed++;
-                            $this->stderr(sprintf(
-                                "Entry %s: no unique code could be generated.\n",
-                                $entry->id ?? 'new'
-                            ));
-                        } else {
-                            $reservedCodes[$code] = true;
-                            $generated++;
-                        }
-                    } elseif ($this->getCraftApplication()->getElements()->saveElement($entry)) {
+                    $code = $service->generateUniqueCode($entry->getCanonicalId(), $reservedCodes);
+                    if ($code === null) {
+                        $failed++;
+                        $this->stderr(sprintf(
+                            "Entry %s: no unique code could be generated.\n",
+                            $entry->id ?? 'new'
+                        ));
+                    } elseif ($this->dryRun) {
+                        $reservedCodes[$code] = true;
                         $generated++;
                     } else {
-                        $failed++;
-                        $errors = $entry->getErrorSummary(true);
-                        $this->stderr(sprintf(
-                            "Entry %s (%s): %s\n",
-                            $entry->id ?? 'new',
-                            $entry->title ?? 'Untitled',
-                            $errors === [] ? 'save failed without a validation message' : implode(' ', $errors)
-                        ));
+                        $entry->setFieldValue($fieldHandle, $code);
+
+                        if ($this->getCraftApplication()->getElements()->saveElement($entry)) {
+                            $generated++;
+                        } else {
+                            $failed++;
+                            $errors = $entry->getErrorSummary(true);
+                            $this->stderr(sprintf(
+                                "Entry %s (%s): %s\n",
+                                $entry->id ?? 'new',
+                                $entry->title ?? 'Untitled',
+                                $errors === [] ? 'save failed without a validation message' : implode(' ', $errors)
+                            ));
+                        }
                     }
                 } catch (Throwable $exception) {
                     $failed++;

@@ -36,10 +36,12 @@ final class ShortCodeServiceTest extends TestCase
     public function testExistingCodeIsPreserved(): void
     {
         $service = $this->service();
-        $entry = $this->entry('media', '7K4MP');
+        $entry = $this->entry('media', '7K4MP', fieldDirty: false);
         $entry->expects(self::never())->method('setFieldValue');
 
         self::assertTrue($service->prepareEntryForSave($entry));
+        $service->validateEntry($entry);
+        self::assertNull($service->lastUniquenessCode);
     }
 
     public function testManualCodeIsNormalizedBeforeSave(): void
@@ -56,7 +58,7 @@ final class ShortCodeServiceTest extends TestCase
     public function testEmptyEligibleEntryReceivesCode(): void
     {
         $service = $this->service();
-        $entry = $this->entry('media', '');
+        $entry = $this->entry('media', '', firstSave: true);
         $entry->expects(self::once())
             ->method('setFieldValue')
             ->with(
@@ -67,6 +69,27 @@ final class ShortCodeServiceTest extends TestCase
             );
 
         self::assertTrue($service->prepareEntryForSave($entry));
+    }
+
+    public function testExistingEmptyEntryDoesNotReceiveCodeDuringSave(): void
+    {
+        $service = $this->service();
+        $entry = $this->entry('media', '');
+        $entry->expects(self::never())->method('setFieldValue');
+
+        self::assertTrue($service->prepareEntryForSave($entry));
+        self::assertNull($service->lastUniquenessCode);
+    }
+
+    public function testResaveJobDoesNotCheckExistingCode(): void
+    {
+        $service = $this->service();
+        $entry = $this->entry('media', '7K4MP', resaving: true);
+        $entry->expects(self::never())->method('setFieldValue');
+
+        self::assertTrue($service->prepareEntryForSave($entry));
+        $service->validateEntry($entry);
+        self::assertNull($service->lastUniquenessCode);
     }
 
     public function testIneligibleSectionDoesNotReceiveCode(): void
@@ -191,6 +214,9 @@ final class ShortCodeServiceTest extends TestCase
         bool $isDraft = false,
         bool $isRevision = false,
         ?string $url = '/articles/example',
+        bool $fieldDirty = true,
+        bool $firstSave = false,
+        bool $resaving = false,
     ): Entry {
         $section = $this->getMockBuilder(Section::class)
             ->disableOriginalConstructor()
@@ -216,6 +242,7 @@ final class ShortCodeServiceTest extends TestCase
                 'getSection',
                 'getType',
                 'getUrl',
+                'isFieldDirty',
                 'setFieldValue',
             ])
             ->getMock();
@@ -223,6 +250,8 @@ final class ShortCodeServiceTest extends TestCase
         $entry->id = 42;
         $entry->sectionId = 1;
         $entry->isProvisionalDraft = false;
+        $entry->firstSave = $firstSave;
+        $entry->resaving = $resaving;
         $entry->method('getCanonicalId')->willReturn(42);
         $entry->method('getFieldValue')->with('shortCode')->willReturn($fieldValue);
         $entry->method('getIsDerivative')->willReturn($isDraft || $isRevision);
@@ -233,6 +262,7 @@ final class ShortCodeServiceTest extends TestCase
         $entry->method('getSection')->willReturn($section);
         $entry->method('getType')->willReturn($entryType);
         $entry->method('getUrl')->willReturn($url);
+        $entry->method('isFieldDirty')->with('shortCode')->willReturn($fieldDirty);
 
         return $entry;
     }

@@ -205,12 +205,21 @@ class ShortCodeService extends Component
         }
 
         $settings = $this->requireSettings();
-        $currentValue = $this->stringValue($entry->getFieldValue($settings->getFieldHandle()));
+        $fieldHandle = $settings->getFieldHandle();
+
+        // Existing entries only need attention when an editor or integration
+        // actually changes the code. In particular, don't turn routine saves
+        // or Craft resave jobs into implicit backfill operations.
+        if (!$entry->firstSave && ($entry->resaving || !$entry->isFieldDirty($fieldHandle))) {
+            return true;
+        }
+
+        $currentValue = $this->stringValue($entry->getFieldValue($fieldHandle));
         $normalizedCode = self::normalizeCode($currentValue);
 
         if ($normalizedCode !== '') {
             if ($normalizedCode !== $currentValue) {
-                $entry->setFieldValue($settings->getFieldHandle(), $normalizedCode);
+                $entry->setFieldValue($fieldHandle, $normalizedCode);
             }
 
             // Enforce the invariant even when a caller explicitly asks Craft
@@ -219,10 +228,17 @@ class ShortCodeService extends Component
             return $this->validateCodeForEntry($entry, $normalizedCode);
         }
 
+        // Existing entries with an empty field are intentionally left alone.
+        // Editors can use the field button and bulk migrations can use the
+        // explicit backfill command.
+        if (!$entry->firstSave) {
+            return true;
+        }
+
         $code = $this->generateUniqueCode($entry->getCanonicalId());
         if ($code === null) {
             $entry->addError(
-                'field:' . $settings->getFieldHandle(),
+                'field:' . $fieldHandle,
                 Craft::t('short-codes', 'A unique code could not be generated. Try saving again.')
             );
             Craft::error(
@@ -237,7 +253,7 @@ class ShortCodeService extends Component
             return false;
         }
 
-        $entry->setFieldValue($settings->getFieldHandle(), $code);
+        $entry->setFieldValue($fieldHandle, $code);
 
         return true;
     }
@@ -252,7 +268,13 @@ class ShortCodeService extends Component
         }
 
         $settings = $this->requireSettings();
-        $code = self::normalizeCode($this->stringValue($entry->getFieldValue($settings->getFieldHandle())));
+        $fieldHandle = $settings->getFieldHandle();
+
+        if (!$entry->firstSave && ($entry->resaving || !$entry->isFieldDirty($fieldHandle))) {
+            return;
+        }
+
+        $code = self::normalizeCode($this->stringValue($entry->getFieldValue($fieldHandle)));
 
         // A standalone validation can happen without a save. Generation remains
         // in the before-save event so Craft 5 includes it in the dirty snapshot.

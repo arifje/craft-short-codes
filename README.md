@@ -112,15 +112,14 @@ For a normal eligible entry save, the plugin:
 
 1. ignores drafts, provisional drafts/autosaves, revisions, derivatives, nested Craft 5 entries, and entries outside the configured section/type scope;
 2. verifies that the configured field exists in the entry's layout, is Plain Text, and is not translatable;
-3. preserves a non-empty code, normalizing it when necessary;
-4. generates a random candidate only when the field is empty;
-5. checks the candidate for global uniqueness;
-6. assigns the value in Craft's entry-level before-save event, before Craft takes its dirty-field snapshot;
-7. enforces format and uniqueness in before-save even when a caller disables normal Craft validation;
-8. checks valid values again during Craft's normal validation pass; and
-9. lets Craft persist the field in the original save operation.
+3. skips existing entries when the short-code field was not changed, as well as Craft resave jobs;
+4. preserves a changed non-empty code, normalizing it when necessary;
+5. generates a random candidate only when the entry is being saved in its normal state for the first time and the field is empty;
+6. checks generated and manually changed values for global uniqueness;
+7. assigns generated values in Craft's entry-level before-save event, before Craft takes its dirty-field snapshot; and
+8. lets Craft persist the field in the original save operation.
 
-There is no second element save and therefore no save recursion. Normal published and unpublished canonical entries can receive codes. Applying a draft to its canonical entry can also generate the canonical code at that point.
+There is no second element save and therefore no save recursion. Existing entries with an empty field are intentionally left unchanged during routine saves; use the entry-form button for one entry or the backfill command for a batch.
 
 ## Manual codes
 
@@ -312,6 +311,13 @@ The unit suite covers alphabet and code normalization, secure generation constra
 Database-backed Craft integration—real content storage on both Craft 4 and Craft 5, multisite propagation, actual console execution, and browser rendering—must still be verified inside the host Craft project because this standalone package does not include a Craft project, database, or site fixtures.
 
 ## Upgrade notes
+
+### 1.2.1
+
+- Limited automatic generation to an entry's first save in its normal state.
+- Existing entries are skipped when their short-code field is unchanged, and Craft resave jobs no longer trigger code checks.
+- Existing empty fields remain unchanged during routine saves; use the entry-form button or backfill command when a code is needed.
+- No migrations are required.
 
 ### 1.2.0
 
